@@ -3,7 +3,8 @@ var AUDIO = AUDIO || {};
 AUDIO.VISUALIZER = (function () {
     'use strict';
 
-    var counter = 0;
+    var PROCESSOR;
+
     /**
      * @description
      * Visualizer constructor.
@@ -11,11 +12,10 @@ AUDIO.VISUALIZER = (function () {
      * @param {Object} cfg
      */
     function Visualizer (cfg) {
-        this.elem = cfg.elem || {};
-        this.canvas = cfg.canvas || {};
+        this.audio = document.getElementById(cfg.audio) || {};
+        this.canvas = document.getElementById(cfg.canvas).getContext('2d') || {};
         this.gradient = null;
         this.ctx = null;
-        this.processor = null;
         this.analyser = null;
         this.sourceNode = null;
         this.frequencyData = 0;
@@ -44,18 +44,16 @@ AUDIO.VISUALIZER = (function () {
      *
      * @return {Object}
      */
-    Visualizer.prototype.setScriptProcessor = function () {
-        this.processor = this.ctx.createScriptProcessor(512, 1, 1);
-        this.processor.connect(this.ctx.destination);
+    Visualizer.prototype.setProcessor = function () {
+        PROCESSOR = this.ctx.createScriptProcessor(1024, 1, 1);
+        PROCESSOR.connect(this.ctx.destination);
 
-        this.processor.onaudioprocess = function () {
-            console.log(counter++);
+        PROCESSOR.onaudioprocess = function () {
             this.analyser.getByteFrequencyData(this.frequencyData);
             this.canvas.clearRect(0, 0, 1000, 325);
             this.canvas.fillStyle = this.gradient;
-            this.renderFrame(this.frequencyData);
+            this.renderFrame();
         }.bind(this);
-
         return this;
     };
 
@@ -92,7 +90,7 @@ AUDIO.VISUALIZER = (function () {
     Visualizer.prototype.setBufferSourceNode = function () {
         this.sourceNode = this.ctx.createBufferSource();
         this.sourceNode.connect(this.analyser);
-        this.analyser.connect(this.processor);
+        this.analyser.connect(PROCESSOR);
         this.sourceNode.connect(this.ctx.destination);
         return this;
     };
@@ -104,7 +102,7 @@ AUDIO.VISUALIZER = (function () {
      * @return {Object}
      */
     Visualizer.prototype.setMediaSource = function () {
-        this.audioSrc = this.elem.getAttribute('src');
+        this.audioSrc = this.audio.getAttribute('src');
         return this;
     };
 
@@ -117,9 +115,9 @@ AUDIO.VISUALIZER = (function () {
     Visualizer.prototype.setGradient = function () {
         this.gradient = this.canvas.createLinearGradient(0, 0, 0, 300);
         this.gradient.addColorStop(1, '#000000');
-        this.gradient.addColorStop(0.75, '#ff0000');
-        this.gradient.addColorStop(0.25, '#ffff00');
-        this.gradient.addColorStop(0, '#ffffff');
+        // this.gradient.addColorStop(0.75, '#ff0000');
+        // this.gradient.addColorStop(0.25, '#ffff00');
+        // this.gradient.addColorStop(0, '#ffffff');
         return this;
     };
 
@@ -157,22 +155,33 @@ AUDIO.VISUALIZER = (function () {
      * @param  {Object} e
      */
     Visualizer.prototype.onError = function (e) {
-        console.log('error', e);
+        console.info('Error. -- ', e);
     };
 
-    Visualizer.prototype.renderFrame = function (arr) {
-        for (var i = 0, len = arr.length; i < len; i++) {
-            var freqValue = arr[i];
+    /**
+     * @description
+     * Render frame on canvas.
+     */
+    Visualizer.prototype.renderFrame = function () {
+        var width = 1000;
+        var height = 325;
+        var cx = width / 2;
+        var cy = height / 2;
+        var radius = 70;
+        var initBarHeight = 2;
+        var barWidth = 3;
+        var barSpacing = 5;
+        var barNum = Math.floor((radius * Math.PI * 2) / (barWidth + barSpacing));
+        var jump = Math.floor(this.frequencyData.length / barNum);
 
-            // this.canvas.translate(500, 325/2);
+        for (var i = 0, len = barNum; i < len; i++) {
+            var freqValue = this.frequencyData[i + jump];
 
-            // this.canvas.rotate(i * Math.PI / 180);
-
-
-            this.canvas.fillRect(i * 5, 325 - freqValue, 3, 325);
-
-            // this.canvas.translate(-500, -(325/2));
-
+            this.canvas.save();
+            this.canvas.translate(cx + barSpacing, cy + barSpacing);
+            this.canvas.rotate((i * 2 * Math.PI ) / barNum);
+            this.canvas.fillRect(0, radius / 2, barWidth, freqValue / 2 + initBarHeight);
+            this.canvas.restore();
         }
     };
 
@@ -180,7 +189,7 @@ AUDIO.VISUALIZER = (function () {
      * @description
      * Create visualizer object.
      *
-     * @param  {Object} cfg
+     * @param  {Object} cfg {audio: <audio_elem>, canvas: <canvas_elem>}
      * @return {Function}
      * @private
      */
@@ -190,7 +199,7 @@ AUDIO.VISUALIZER = (function () {
         return function () {
             visualizer
                 .setContext()
-                .setScriptProcessor()
+                .setProcessor()
                 .setAnalyser()
                 .setFrequencyData()
                 .setBufferSourceNode()
@@ -228,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
     AUDIO.VISUALIZER.init({
-        elem: document.getElementById('myAudio'),
-        canvas: document.getElementById('canvas').getContext('2d')
-    }).loadSound();
+        audio: 'myAudio',
+        canvas: 'myCanvas'
+    });
 }, false);
