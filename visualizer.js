@@ -169,17 +169,19 @@ AUDIO.VISUALIZER = (function () {
         var cy = height / 2;
         var radius = 70;
         var initBarHeight = 2;
-        var barWidth = 3;
+        var barWidth = 2;
         var barSpacing = 5;
-        var barNum = Math.floor((radius * Math.PI * 2) / (barWidth + barSpacing));
+        var maxBarNum = Math.floor((radius * 2 * Math.PI) / (barWidth + barSpacing));
+        var slicedPercent = Math.floor((maxBarNum * 25) / 100);
+        var barNum = maxBarNum - slicedPercent;
         var jump = Math.floor(this.frequencyData.length / barNum);
 
-        for (var i = 0, len = barNum; i < len; i++) {
-            var freqValue = this.frequencyData[i + jump];
+        for (var i = 0; i < barNum; i++) {
+            var freqValue = this.frequencyData[i * jump];
 
             this.canvas.save();
             this.canvas.translate(cx + barSpacing, cy + barSpacing);
-            this.canvas.rotate((i * 2 * Math.PI ) / barNum);
+            this.canvas.rotate(((i * 2 * Math.PI ) / maxBarNum) - ((3 * 45 - barWidth) * Math.PI / 180));
             this.canvas.fillRect(0, radius / 2, barWidth, freqValue / 2 + initBarHeight);
             this.canvas.restore();
         }
@@ -239,5 +241,5 @@ document.addEventListener('DOMContentLoaded', function () {
     AUDIO.VISUALIZER.init({
         audio: 'myAudio',
         canvas: 'myCanvas'
-    });
+    }).loadSound();
 }, false);
