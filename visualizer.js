@@ -3,7 +3,11 @@ var AUDIO = AUDIO || {};
 AUDIO.VISUALIZER = (function () {
     'use strict';
 
-    var PROCESSOR;
+    var PROCESSOR = null;
+    var INTERVAL = 0;
+    var TYPE = {
+            'lounge': 'renderLounge'
+        };
 
     /**
      * @description
@@ -12,20 +16,27 @@ AUDIO.VISUALIZER = (function () {
      * @param {Object} cfg
      */
     function Visualizer (cfg) {
+        this.isPlaying = false;
         this.audio = document.getElementById(cfg.audio) || {};
         this.canvas = document.getElementById(cfg.canvas) || {};
         this.canvasCtx = this.canvas.getContext('2d') || null;
-        this.barWidth = cfg.barWidth || 2;
-        this.barHeight = cfg.barHeight || 2;
-        this.barSpacing = cfg.barSpacing || 5;
-        this.barColor = cfg.barColor || '#ffffff';
-        this.gradient = null;
         this.ctx = null;
         this.analyser = null;
         this.sourceNode = null;
         this.frequencyData = 0;
         this.audioSrc = null;
-        this.counter = 0;
+        this.duration = 0;
+        this.minutes = '00';
+        this.seconds = '00';
+        this.style = cfg.style || 'lounge';
+        this.barWidth = cfg.barWidth || 2;
+        this.barHeight = cfg.barHeight || 2;
+        this.barSpacing = cfg.barSpacing || 5;
+        this.barColor = cfg.barColor || '#ffffff';
+        this.shadowBlur = cfg.shadowBlur || 10;
+        this.shadowColor = cfg.shadowColor || '#ffffff';
+        this.font = cfg.font || ['12px', 'Helvetica'];
+        this.gradient = null;
     }
 
     /**
@@ -56,10 +67,6 @@ AUDIO.VISUALIZER = (function () {
 
         PROCESSOR.onaudioprocess = function () {
             this.analyser.getByteFrequencyData(this.frequencyData);
-            this.canvasCtx.clearRect(0, 0, 1000, 325);
-            this.canvasCtx.fillStyle = this.gradient;
-            this.canvasCtx.shadowBlur = 10;
-            this.canvasCtx.shadowColor = '#ffffff';
             this.renderFrame();
         }.bind(this);
 
@@ -103,7 +110,8 @@ AUDIO.VISUALIZER = (function () {
         this.sourceNode.connect(this.ctx.destination);
 
         this.sourceNode.onended = function () {
-            console.log('End.');
+            this.isPlaying = false;
+            clearInterval(INTERVAL);
         };
 
         return this;
@@ -155,8 +163,28 @@ AUDIO.VISUALIZER = (function () {
      * @param  {Object} buffer
      */
     Visualizer.prototype.playSound = function (buffer) {
+        var time = new Date(0, 0);
+        this.duration = time.getTime();
         this.sourceNode.buffer = buffer;
         this.sourceNode.start(0);
+        this.isPlaying = true;
+        this.startTimer();
+    };
+
+    /**
+     * @description
+     * Start playing timer.
+     */
+    Visualizer.prototype.startTimer = function () {
+        var _this = this;
+        INTERVAL = setInterval(function () {
+            var now = new Date(_this.duration);
+            var min = now.getHours();
+            var sec = now.getMinutes();
+            _this.minutes = (min < 10) ? '0' + min : min;
+            _this.seconds = (sec < 10) ? '0' + sec : sec;
+            _this.duration = now.setMinutes(sec + 1);
+        }, 1000);
     };
 
     /**
@@ -166,7 +194,7 @@ AUDIO.VISUALIZER = (function () {
      * @param  {Object} e
      */
     Visualizer.prototype.onError = function (e) {
-        console.info('Error. -- ', e);
+        console.info('Error decoding audio file. -- ', e);
     };
 
     /**
@@ -174,6 +202,59 @@ AUDIO.VISUALIZER = (function () {
      * Render frame on canvas.
      */
     Visualizer.prototype.renderFrame = function () {
+        this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.canvasCtx.fillStyle = this.gradient;
+        this.canvasCtx.shadowBlur = this.shadowBlur;
+        this.canvasCtx.shadowColor = this.shadowColor;
+        this.canvasCtx.font = this.font.join(' ');
+        this.canvasCtx.textAlign = 'center';
+
+        this.renderTime();
+        this.renderText();
+        this.renderByStyleType();
+    };
+
+    /**
+     * @description
+     * Render audio author and title.
+     */
+    Visualizer.prototype.renderText = function () {
+        var cx = this.canvas.width / 2;
+        var cy = this.canvas.height / 2;
+        var correction = 10;
+        var text = this.getInfo();
+
+        this.canvasCtx.textBaseline = 'top';
+        this.canvasCtx.fillText('by ' + text.author, cx + correction, cy);
+        this.canvasCtx.font = parseInt(this.font[0], 10) + 8 + 'px ' + this.font[1];
+        this.canvasCtx.textBaseline = 'bottom';
+        this.canvasCtx.fillText(text.title, cx + correction / 2, cy);
+    };
+
+    /**
+     * @description
+     * Render audio time.
+     */
+    Visualizer.prototype.renderTime = function () {
+        var time = this.minutes + ':' + this.seconds;
+        this.canvasCtx.fillText(time, this.canvas.width / 2 + 5, this.canvas.height / 2 + 40);
+    };
+
+    /**
+     * @description
+     * Render frame by style type.
+     *
+     * @return {Function}
+     */
+    Visualizer.prototype.renderByStyleType = function () {
+        return this[TYPE[this.style]]();
+    };
+
+    /**
+     * @description
+     * Render lounge style type.
+     */
+    Visualizer.prototype.renderLounge = function () {
         var cx = this.canvas.width / 2;
         var cy = this.canvas.height / 2;
         var radius = Math.ceil(this.canvas.height / 3);
@@ -187,9 +268,9 @@ AUDIO.VISUALIZER = (function () {
             var alfa = (i * 2 * Math.PI ) / maxBarNum;
             var beta = (3 * 45 - this.barWidth) * Math.PI / 180;
             var x = 0;
-            var y = radius - (amplitude / 24 - this.barHeight);
+            var y = radius - (amplitude / 16 - this.barHeight);
             var w = this.barWidth;
-            var h = amplitude / 12 + this.barHeight;
+            var h = amplitude / 8 + this.barHeight;
 
             this.canvasCtx.save();
             this.canvasCtx.translate(cx + this.barSpacing, cy + this.barSpacing);
@@ -201,16 +282,34 @@ AUDIO.VISUALIZER = (function () {
 
     /**
      * @description
+     * Get audio author and title info.
+     *
+     * @return {Object}
+     */
+    Visualizer.prototype.getInfo = function () {
+        var info = this.audioSrc.replace(/\_/g, ' ').split('.')[0].split('-');
+        return {
+            author: info[0],
+            title: info[1]
+        };
+    };
+
+    /**
+     * @description
      * Create visualizer object instance.
      *
      * @param  {Object} cfg
      * {
      *     audio: <String>,
      *     canvas: <String>,
+     *     style: <String>,
      *     barWidth: <Integer>,
      *     barHeight: <Integer>,
      *     barSpacing: <Integer>,
-     *     barColor: <String>
+     *     barColor: <String>,
+     *     shadowBlur: <Integer>,
+     *     shadowColor: <String>,
+     *     font: <Array>
      * }
      * @return {Function}
      * @private
@@ -261,9 +360,13 @@ document.addEventListener('DOMContentLoaded', function () {
     AUDIO.VISUALIZER.init({
         audio: 'myAudio',
         canvas: 'myCanvas',
+        style: 'lounge',
         barWidth: 2,
         barHeight: 2,
         barSpacing: 7,
-        barColor: '#cafdff'
+        barColor: '#cafdff',
+        shadowBlur: 20,
+        shadowColor: '#ffffff',
+        font: ['12px', 'Helvetica']
     }).loadSound();
 }, false);
