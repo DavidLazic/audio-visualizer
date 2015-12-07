@@ -13,13 +13,19 @@ AUDIO.VISUALIZER = (function () {
      */
     function Visualizer (cfg) {
         this.audio = document.getElementById(cfg.audio) || {};
-        this.canvas = document.getElementById(cfg.canvas).getContext('2d') || {};
+        this.canvas = document.getElementById(cfg.canvas) || {};
+        this.canvasCtx = this.canvas.getContext('2d') || null;
+        this.barWidth = cfg.barWidth || 2;
+        this.barHeight = cfg.barHeight || 2;
+        this.barSpacing = cfg.barSpacing || 5;
+        this.barColor = cfg.barColor || '#ffffff';
         this.gradient = null;
         this.ctx = null;
         this.analyser = null;
         this.sourceNode = null;
         this.frequencyData = 0;
         this.audioSrc = null;
+        this.counter = 0;
     }
 
     /**
@@ -50,10 +56,13 @@ AUDIO.VISUALIZER = (function () {
 
         PROCESSOR.onaudioprocess = function () {
             this.analyser.getByteFrequencyData(this.frequencyData);
-            this.canvas.clearRect(0, 0, 1000, 325);
-            this.canvas.fillStyle = this.gradient;
+            this.canvasCtx.clearRect(0, 0, 1000, 325);
+            this.canvasCtx.fillStyle = this.gradient;
+            this.canvasCtx.shadowBlur = 10;
+            this.canvasCtx.shadowColor = '#ffffff';
             this.renderFrame();
         }.bind(this);
+
         return this;
     };
 
@@ -65,7 +74,7 @@ AUDIO.VISUALIZER = (function () {
      */
     Visualizer.prototype.setAnalyser = function () {
         this.analyser = this.ctx.createAnalyser();
-        this.analyser.smoothingTimeConstant = 0.3;
+        this.analyser.smoothingTimeConstant = 0.6;
         this.analyser.fftSize = 512;
         return this;
     };
@@ -92,6 +101,11 @@ AUDIO.VISUALIZER = (function () {
         this.sourceNode.connect(this.analyser);
         this.analyser.connect(PROCESSOR);
         this.sourceNode.connect(this.ctx.destination);
+
+        this.sourceNode.onended = function () {
+            console.log('End.');
+        };
+
         return this;
     };
 
@@ -113,11 +127,8 @@ AUDIO.VISUALIZER = (function () {
      * @return {Object}
      */
     Visualizer.prototype.setGradient = function () {
-        this.gradient = this.canvas.createLinearGradient(0, 0, 0, 300);
-        this.gradient.addColorStop(1, '#000000');
-        // this.gradient.addColorStop(0.75, '#ff0000');
-        // this.gradient.addColorStop(0.25, '#ffff00');
-        // this.gradient.addColorStop(0, '#ffffff');
+        this.gradient = this.canvasCtx.createLinearGradient(0, 0, 0, 300);
+        this.gradient.addColorStop(1, this.barColor);
         return this;
     };
 
@@ -163,35 +174,44 @@ AUDIO.VISUALIZER = (function () {
      * Render frame on canvas.
      */
     Visualizer.prototype.renderFrame = function () {
-        var width = 1000;
-        var height = 325;
-        var cx = width / 2;
-        var cy = height / 2;
-        var radius = 70;
-        var initBarHeight = 2;
-        var barWidth = 2;
-        var barSpacing = 5;
-        var maxBarNum = Math.floor((radius * 2 * Math.PI) / (barWidth + barSpacing));
+        var cx = this.canvas.width / 2;
+        var cy = this.canvas.height / 2;
+        var radius = Math.ceil(this.canvas.height / 3);
+        var maxBarNum = Math.floor((radius * 2 * Math.PI) / (this.barWidth + this.barSpacing));
         var slicedPercent = Math.floor((maxBarNum * 25) / 100);
         var barNum = maxBarNum - slicedPercent;
-        var jump = Math.floor(this.frequencyData.length / barNum);
+        var freqJump = Math.floor(this.frequencyData.length / maxBarNum);
 
         for (var i = 0; i < barNum; i++) {
-            var freqValue = this.frequencyData[i * jump];
+            var amplitude = this.frequencyData[i * freqJump];
+            var alfa = (i * 2 * Math.PI ) / maxBarNum;
+            var beta = (3 * 45 - this.barWidth) * Math.PI / 180;
+            var x = 0;
+            var y = radius - (amplitude / 24 - this.barHeight);
+            var w = this.barWidth;
+            var h = amplitude / 12 + this.barHeight;
 
-            this.canvas.save();
-            this.canvas.translate(cx + barSpacing, cy + barSpacing);
-            this.canvas.rotate(((i * 2 * Math.PI ) / maxBarNum) - ((3 * 45 - barWidth) * Math.PI / 180));
-            this.canvas.fillRect(0, radius / 2, barWidth, freqValue / 2 + initBarHeight);
-            this.canvas.restore();
+            this.canvasCtx.save();
+            this.canvasCtx.translate(cx + this.barSpacing, cy + this.barSpacing);
+            this.canvasCtx.rotate(alfa - beta);
+            this.canvasCtx.fillRect(x, y, w, h);
+            this.canvasCtx.restore();
         }
     };
 
     /**
      * @description
-     * Create visualizer object.
+     * Create visualizer object instance.
      *
-     * @param  {Object} cfg {audio: <audio_elem>, canvas: <canvas_elem>}
+     * @param  {Object} cfg
+     * {
+     *     audio: <String>,
+     *     canvas: <String>,
+     *     barWidth: <Integer>,
+     *     barHeight: <Integer>,
+     *     barSpacing: <Integer>,
+     *     barColor: <String>
+     * }
      * @return {Function}
      * @private
      */
@@ -240,6 +260,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     AUDIO.VISUALIZER.init({
         audio: 'myAudio',
-        canvas: 'myCanvas'
+        canvas: 'myCanvas',
+        barWidth: 2,
+        barHeight: 2,
+        barSpacing: 7,
+        barColor: '#cafdff'
     }).loadSound();
 }, false);
