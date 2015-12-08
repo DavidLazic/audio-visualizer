@@ -6,9 +6,9 @@ AUDIO.VISUALIZER = (function () {
     var PROCESSOR = null;
     var INTERVAL = null;
 
-    const BUFFER_SIZE = 1024;
-    const FFT_SIZE = 512;
-    const TYPE = {
+    var BUFFER_SIZE = 1024;
+    var FFT_SIZE = 512;
+    var TYPE = {
             'lounge': 'renderLounge'
         };
 
@@ -267,14 +267,14 @@ AUDIO.VISUALIZER = (function () {
         var barNum = maxBarNum - slicedPercent;
         var freqJump = Math.floor(this.frequencyData.length / maxBarNum);
 
-        for (let i = 0; i < barNum; i++) {
-            let amplitude = this.frequencyData[i * freqJump];
-            let alfa = (i * 2 * Math.PI ) / maxBarNum;
-            let beta = (3 * 45 - this.barWidth) * Math.PI / 180;
-            let x = 0;
-            let y = radius - (amplitude / 16 - this.barHeight);
-            let w = this.barWidth;
-            let h = amplitude / 8 + this.barHeight;
+        for (var i = 0; i < barNum; i++) {
+            var amplitude = this.frequencyData[i * freqJump];
+            var alfa = (i * 2 * Math.PI ) / maxBarNum;
+            var beta = (3 * 45 - this.barWidth) * Math.PI / 180;
+            var x = 0;
+            var y = radius - (amplitude / 16 - this.barHeight);
+            var w = this.barWidth;
+            var h = amplitude / 8 + this.barHeight;
 
             this.canvasCtx.save();
             this.canvasCtx.translate(cx + this.barSpacing, cy + this.barSpacing);
