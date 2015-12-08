@@ -291,7 +291,7 @@ AUDIO.VISUALIZER = (function () {
      * @return {Object}
      */
     Visualizer.prototype.getInfo = function () {
-        var info = this.audioSrc.replace(/\_/g, ' ').split('.')[0].split('-');
+        var info = this.audioSrc.replace(/\_/g, ' ').split('/')[1].split('.')[0].split('-');
         return {
             author: info[0],
             title: info[1]
