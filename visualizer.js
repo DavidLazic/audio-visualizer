@@ -4,8 +4,11 @@ AUDIO.VISUALIZER = (function () {
     'use strict';
 
     var PROCESSOR = null;
-    var INTERVAL = 0;
-    var TYPE = {
+    var INTERVAL = null;
+
+    const BUFFER_SIZE = 1024;
+    const FFT_SIZE = 512;
+    const TYPE = {
             'lounge': 'renderLounge'
         };
 
@@ -15,6 +18,7 @@ AUDIO.VISUALIZER = (function () {
      *
      * @param {Object} cfg
      */
+
     function Visualizer (cfg) {
         this.isPlaying = false;
         this.audio = document.getElementById(cfg.audio) || {};
@@ -23,7 +27,7 @@ AUDIO.VISUALIZER = (function () {
         this.ctx = null;
         this.analyser = null;
         this.sourceNode = null;
-        this.frequencyData = 0;
+        this.frequencyData = [];
         this.audioSrc = null;
         this.duration = 0;
         this.minutes = '00';
@@ -62,7 +66,7 @@ AUDIO.VISUALIZER = (function () {
      * @return {Object}
      */
     Visualizer.prototype.setProcessor = function () {
-        PROCESSOR = this.ctx.createScriptProcessor(1024, 1, 1);
+        PROCESSOR = this.ctx.createScriptProcessor(BUFFER_SIZE, 1, 1);
         PROCESSOR.connect(this.ctx.destination);
 
         PROCESSOR.onaudioprocess = function () {
@@ -82,7 +86,7 @@ AUDIO.VISUALIZER = (function () {
     Visualizer.prototype.setAnalyser = function () {
         this.analyser = this.ctx.createAnalyser();
         this.analyser.smoothingTimeConstant = 0.6;
-        this.analyser.fftSize = 512;
+        this.analyser.fftSize = FFT_SIZE;
         return this;
     };
 
@@ -263,14 +267,14 @@ AUDIO.VISUALIZER = (function () {
         var barNum = maxBarNum - slicedPercent;
         var freqJump = Math.floor(this.frequencyData.length / maxBarNum);
 
-        for (var i = 0; i < barNum; i++) {
-            var amplitude = this.frequencyData[i * freqJump];
-            var alfa = (i * 2 * Math.PI ) / maxBarNum;
-            var beta = (3 * 45 - this.barWidth) * Math.PI / 180;
-            var x = 0;
-            var y = radius - (amplitude / 16 - this.barHeight);
-            var w = this.barWidth;
-            var h = amplitude / 8 + this.barHeight;
+        for (let i = 0; i < barNum; i++) {
+            let amplitude = this.frequencyData[i * freqJump];
+            let alfa = (i * 2 * Math.PI ) / maxBarNum;
+            let beta = (3 * 45 - this.barWidth) * Math.PI / 180;
+            let x = 0;
+            let y = radius - (amplitude / 16 - this.barHeight);
+            let w = this.barWidth;
+            let h = amplitude / 8 + this.barHeight;
 
             this.canvasCtx.save();
             this.canvasCtx.translate(cx + this.barSpacing, cy + this.barSpacing);
