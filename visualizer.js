@@ -3,10 +3,7 @@ var AUDIO = AUDIO || {};
 AUDIO.VISUALIZER = (function () {
     'use strict';
 
-    var PROCESSOR = null;
     var INTERVAL = null;
-
-    var BUFFER_SIZE = 1024;
     var FFT_SIZE = 512;
     var TYPE = {
             'lounge': 'renderLounge'
@@ -21,9 +18,13 @@ AUDIO.VISUALIZER = (function () {
 
     function Visualizer (cfg) {
         this.isPlaying = false;
+        this.autoplay = cfg.autoplay || false;
+        this.loop = cfg.loop || false;
         this.audio = document.getElementById(cfg.audio) || {};
         this.canvas = document.getElementById(cfg.canvas) || {};
         this.canvasCtx = this.canvas.getContext('2d') || null;
+        this.author = this.audio.getAttribute('data-author') || '';
+        this.title = this.audio.getAttribute('data-title') || '';
         this.ctx = null;
         this.analyser = null;
         this.sourceNode = null;
@@ -61,24 +62,6 @@ AUDIO.VISUALIZER = (function () {
 
     /**
      * @description
-     * Set JS node processor for audio file.
-     *
-     * @return {Object}
-     */
-    Visualizer.prototype.setProcessor = function () {
-        PROCESSOR = this.ctx.createScriptProcessor(BUFFER_SIZE, 1, 1);
-        PROCESSOR.connect(this.ctx.destination);
-
-        PROCESSOR.onaudioprocess = function () {
-            this.analyser.getByteFrequencyData(this.frequencyData);
-            this.renderFrame();
-        }.bind(this);
-
-        return this;
-    };
-
-    /**
-     * @description
      * Set buffer analyser.
      *
      * @return {Object}
@@ -109,14 +92,14 @@ AUDIO.VISUALIZER = (function () {
      */
     Visualizer.prototype.setBufferSourceNode = function () {
         this.sourceNode = this.ctx.createBufferSource();
+        this.sourceNode.loop = this.loop;
         this.sourceNode.connect(this.analyser);
-        this.analyser.connect(PROCESSOR);
         this.sourceNode.connect(this.ctx.destination);
 
         this.sourceNode.onended = function () {
-            this.isPlaying = false;
             clearInterval(INTERVAL);
-        };
+            this.resetTimer();
+        }.bind(this);
 
         return this;
     };
@@ -138,9 +121,14 @@ AUDIO.VISUALIZER = (function () {
      *
      * @return {Object}
      */
-    Visualizer.prototype.setGradient = function () {
+    Visualizer.prototype.setCanvasStyles = function () {
         this.gradient = this.canvasCtx.createLinearGradient(0, 0, 0, 300);
         this.gradient.addColorStop(1, this.barColor);
+        this.canvasCtx.fillStyle = this.gradient;
+        this.canvasCtx.shadowBlur = this.shadowBlur;
+        this.canvasCtx.shadowColor = this.shadowColor;
+        this.canvasCtx.font = this.font.join(' ');
+        this.canvasCtx.textAlign = 'center';
         return this;
     };
 
@@ -154,6 +142,7 @@ AUDIO.VISUALIZER = (function () {
         req.responseType = 'arraybuffer';
 
         req.onload = function () {
+            this.canvasCtx.fillText('Loading...', this.canvas.width / 2 + 10, this.canvas.height / 2);
             this.ctx.decodeAudioData(req.response, this.playSound.bind(this), this.onError.bind(this));
         }.bind(this);
 
@@ -167,12 +156,26 @@ AUDIO.VISUALIZER = (function () {
      * @param  {Object} buffer
      */
     Visualizer.prototype.playSound = function (buffer) {
-        var time = new Date(0, 0);
-        this.duration = time.getTime();
+        this.isPlaying = true;
+
+        if (this.ctx.state === 'suspended') {
+            return this.ctx.resume();
+        }
+
         this.sourceNode.buffer = buffer;
         this.sourceNode.start(0);
-        this.isPlaying = true;
+        this.resetTimer();
         this.startTimer();
+        this.renderFrame();
+    };
+
+    /**
+     * @description
+     * Pause current sound.
+     */
+    Visualizer.prototype.pauseSound = function () {
+        this.ctx.suspend();
+        this.isPlaying = false;
     };
 
     /**
@@ -193,6 +196,15 @@ AUDIO.VISUALIZER = (function () {
 
     /**
      * @description
+     * Reset time counter.
+     */
+    Visualizer.prototype.resetTimer = function () {
+        var time =  new Date(0, 0);
+        this.duration = time.getTime();
+    };
+
+    /**
+     * @description
      * On audio data stream error fn.
      *
      * @param  {Object} e
@@ -206,12 +218,10 @@ AUDIO.VISUALIZER = (function () {
      * Render frame on canvas.
      */
     Visualizer.prototype.renderFrame = function () {
+        requestAnimationFrame(this.renderFrame.bind(this));
+        this.analyser.getByteFrequencyData(this.frequencyData);
+
         this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.canvasCtx.fillStyle = this.gradient;
-        this.canvasCtx.shadowBlur = this.shadowBlur;
-        this.canvasCtx.shadowColor = this.shadowColor;
-        this.canvasCtx.font = this.font.join(' ');
-        this.canvasCtx.textAlign = 'center';
 
         this.renderTime();
         this.renderText();
@@ -226,13 +236,13 @@ AUDIO.VISUALIZER = (function () {
         var cx = this.canvas.width / 2;
         var cy = this.canvas.height / 2;
         var correction = 10;
-        var text = this.getInfo();
 
         this.canvasCtx.textBaseline = 'top';
-        this.canvasCtx.fillText('by ' + text.author, cx + correction, cy);
+        this.canvasCtx.fillText('by ' + this.author, cx + correction, cy);
         this.canvasCtx.font = parseInt(this.font[0], 10) + 8 + 'px ' + this.font[1];
         this.canvasCtx.textBaseline = 'bottom';
-        this.canvasCtx.fillText(text.title, cx + correction / 2, cy);
+        this.canvasCtx.fillText(this.title, cx + correction / 2, cy);
+        this.canvasCtx.font = this.font.join(' ');
     };
 
     /**
@@ -261,7 +271,7 @@ AUDIO.VISUALIZER = (function () {
     Visualizer.prototype.renderLounge = function () {
         var cx = this.canvas.width / 2;
         var cy = this.canvas.height / 2;
-        var radius = Math.ceil(this.canvas.height / 3);
+        var radius = 140;
         var maxBarNum = Math.floor((radius * 2 * Math.PI) / (this.barWidth + this.barSpacing));
         var slicedPercent = Math.floor((maxBarNum * 25) / 100);
         var barNum = maxBarNum - slicedPercent;
@@ -286,24 +296,12 @@ AUDIO.VISUALIZER = (function () {
 
     /**
      * @description
-     * Get audio author and title info.
-     *
-     * @return {Object}
-     */
-    Visualizer.prototype.getInfo = function () {
-        var info = this.audioSrc.replace(/\_/g, ' ').split('.')[0].split('-');
-        return {
-            author: info[0],
-            title: info[1]
-        };
-    };
-
-    /**
-     * @description
      * Create visualizer object instance.
      *
      * @param  {Object} cfg
      * {
+     *     autoplay: <Bool>,
+     *     loop: <Bool>,
      *     audio: <String>,
      *     canvas: <String>,
      *     style: <String>,
@@ -324,12 +322,11 @@ AUDIO.VISUALIZER = (function () {
         return function () {
             visualizer
                 .setContext()
-                .setProcessor()
                 .setAnalyser()
                 .setFrequencyData()
                 .setBufferSourceNode()
                 .setMediaSource()
-                .setGradient();
+                .setCanvasStyles();
 
             return visualizer;
         };
@@ -361,7 +358,9 @@ AUDIO.VISUALIZER = (function () {
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    AUDIO.VISUALIZER.init({
+    var visualizer = AUDIO.VISUALIZER.init({
+        autoplay: true,
+        loop: true,
         audio: 'myAudio',
         canvas: 'myCanvas',
         style: 'lounge',
@@ -372,5 +371,18 @@ document.addEventListener('DOMContentLoaded', function () {
         shadowBlur: 20,
         shadowColor: '#ffffff',
         font: ['12px', 'Helvetica']
-    }).loadSound();
+    });
+
+    if (visualizer.autoplay) {
+        visualizer.loadSound();
+    } else {
+        document.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (!visualizer.isPlaying) {
+                return (visualizer.ctx.state === 'suspended') ? visualizer.playSound() : visualizer.loadSound();
+            } else {
+                return visualizer.pauseSound();
+            }
+        });
+    }
 }, false);
