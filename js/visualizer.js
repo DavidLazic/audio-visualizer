@@ -287,9 +287,9 @@ AUDIO.VISUALIZER = (function () {
             var alfa = (i * 2 * Math.PI ) / maxBarNum;
             var beta = (3 * 45 - this.barWidth) * Math.PI / 180;
             var x = 0;
-            var y = radius - (amplitude / 16 - this.barHeight);
+            var y = radius - (amplitude / 8 - this.barHeight);
             var w = this.barWidth;
-            var h = amplitude / 8 + this.barHeight;
+            var h = amplitude / 4 + this.barHeight;
 
             this.canvasCtx.save();
             this.canvasCtx.translate(cx + this.barSpacing, cy + this.barSpacing);
