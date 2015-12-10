@@ -98,7 +98,10 @@ AUDIO.VISUALIZER = (function () {
 
         this.sourceNode.onended = function () {
             clearInterval(INTERVAL);
+            this.sourceNode.disconnect();
             this.resetTimer();
+            this.isPlaying = false;
+            this.sourceNode = this.ctx.createBufferSource();
         }.bind(this);
 
         return this;
@@ -241,7 +244,7 @@ AUDIO.VISUALIZER = (function () {
         this.canvasCtx.fillText('by ' + this.author, cx + correction, cy);
         this.canvasCtx.font = parseInt(this.font[0], 10) + 8 + 'px ' + this.font[1];
         this.canvasCtx.textBaseline = 'bottom';
-        this.canvasCtx.fillText(this.title, cx + correction / 2, cy);
+        this.canvasCtx.fillText(this.title, cx + correction, cy);
         this.canvasCtx.font = this.font.join(' ');
     };
 
@@ -251,7 +254,7 @@ AUDIO.VISUALIZER = (function () {
      */
     Visualizer.prototype.renderTime = function () {
         var time = this.minutes + ':' + this.seconds;
-        this.canvasCtx.fillText(time, this.canvas.width / 2 + 5, this.canvas.height / 2 + 40);
+        this.canvasCtx.fillText(time, this.canvas.width / 2 + 10, this.canvas.height / 2 + 40);
     };
 
     /**
@@ -373,16 +376,16 @@ document.addEventListener('DOMContentLoaded', function () {
         font: ['12px', 'Helvetica']
     });
 
+    document.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!visualizer.isPlaying) {
+            return (visualizer.ctx.state === 'suspended') ? visualizer.playSound() : visualizer.loadSound();
+        } else {
+            return visualizer.pauseSound();
+        }
+    });
+
     if (visualizer.autoplay) {
         visualizer.loadSound();
-    } else {
-        document.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (!visualizer.isPlaying) {
-                return (visualizer.ctx.state === 'suspended') ? visualizer.playSound() : visualizer.loadSound();
-            } else {
-                return visualizer.pauseSound();
-            }
-        });
     }
 }, false);
