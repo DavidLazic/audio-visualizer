@@ -143,9 +143,9 @@ AUDIO.VISUALIZER = (function () {
         var req = new XMLHttpRequest();
         req.open('GET', this.audioSrc, true);
         req.responseType = 'arraybuffer';
+        this.canvasCtx.fillText('Loading...', this.canvas.width / 2 + 10, this.canvas.height / 2);
 
         req.onload = function () {
-            this.canvasCtx.fillText('Loading...', this.canvas.width / 2 + 10, this.canvas.height / 2);
             this.ctx.decodeAudioData(req.response, this.playSound.bind(this), this.onError.bind(this));
         }.bind(this);
 
@@ -188,12 +188,14 @@ AUDIO.VISUALIZER = (function () {
     Visualizer.prototype.startTimer = function () {
         var _this = this;
         INTERVAL = setInterval(function () {
-            var now = new Date(_this.duration);
-            var min = now.getHours();
-            var sec = now.getMinutes();
-            _this.minutes = (min < 10) ? '0' + min : min;
-            _this.seconds = (sec < 10) ? '0' + sec : sec;
-            _this.duration = now.setMinutes(sec + 1);
+            if (_this.isPlaying) {
+                var now = new Date(_this.duration);
+                var min = now.getHours();
+                var sec = now.getMinutes();
+                _this.minutes = (min < 10) ? '0' + min : min;
+                _this.seconds = (sec < 10) ? '0' + sec : sec;
+                _this.duration = now.setMinutes(sec + 1);
+            }
         }, 1000);
     };
 
