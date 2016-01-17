@@ -137,6 +137,33 @@ AUDIO.VISUALIZER = (function () {
 
     /**
      * @description
+     * Bind click events.
+     *
+     * @return {Object}
+     */
+    Visualizer.prototype.bindEvents = function () {
+        var _this = this;
+
+        document.addEventListener('click', function (e) {
+            if (e.target === _this.canvas) {
+                e.stopPropagation();
+                if (!_this.isPlaying) {
+                    return (_this.ctx.state === 'suspended') ? _this.playSound() : _this.loadSound();
+                } else {
+                    return _this.pauseSound();
+                }
+            }
+        });
+
+        if (_this.autoplay) {
+            _this.loadSound();
+        }
+
+        return this;
+    };
+
+    /**
+     * @description
      * Load sound file.
      */
     Visualizer.prototype.loadSound = function () {
@@ -331,7 +358,8 @@ AUDIO.VISUALIZER = (function () {
                 .setFrequencyData()
                 .setBufferSourceNode()
                 .setMediaSource()
-                .setCanvasStyles();
+                .setCanvasStyles()
+                .bindEvents();
 
             return visualizer;
         };
@@ -339,13 +367,13 @@ AUDIO.VISUALIZER = (function () {
 
     /**
      * @description
-     * Initialize visualizer.
+     * Get visualizer instance.
      *
      * @param  {Object} cfg
      * @return {Object}
      * @public
      */
-    function init (cfg) {
+    function getInstance (cfg) {
         return _createVisualizer(cfg)();
     }
 
@@ -356,14 +384,14 @@ AUDIO.VISUALIZER = (function () {
      * @public
      */
     return {
-        init: init
+        getInstance: getInstance
     };
 })();
 
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    var visualizer = AUDIO.VISUALIZER.init({
+    AUDIO.VISUALIZER.getInstance({
         autoplay: true,
         loop: true,
         audio: 'myAudio',
@@ -377,17 +405,4 @@ document.addEventListener('DOMContentLoaded', function () {
         shadowColor: '#ffffff',
         font: ['12px', 'Helvetica']
     });
-
-    document.addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (!visualizer.isPlaying) {
-            return (visualizer.ctx.state === 'suspended') ? visualizer.playSound() : visualizer.loadSound();
-        } else {
-            return visualizer.pauseSound();
-        }
-    });
-
-    if (visualizer.autoplay) {
-        visualizer.loadSound();
-    }
 }, false);
