@@ -10,9 +10,10 @@ Web Audio experiment for audio visualization on canvas.
 Include visualizer script in your index.html
 
 ````html
-<script src="visualizer.js"></script>
+    <script src="visualizer.js"></script>
 ````
 
+Include `audio` and `canvas` HTML elements.
 ````html
     <div>
         <audio id="myAudio" src="path/to/source/audio/" data-author="insert/author/name" data-title="insert/audio/name"></audio>
@@ -22,7 +23,7 @@ Include visualizer script in your index.html
 **Notice**: For visualizer to render audio and author names you'll have to set `data-author` and `data-title` attributes on your audio element.
 
 
-Create Visualizer instance
+Create Visualizer instance.
 
 ````shell
     AUDIO.VISUALIZER.getInstance({
@@ -33,66 +34,77 @@ Create Visualizer instance
 
 #### Options
 
-````shell
 **audio** (String) (required)
-````
-Audio element's ID selector.
 
 ````shell
+    Audio element's ID selector.
+````
+
 **canvas** (String) (required)
-````
-Canvas element's ID selector.
 
 ````shell
+    Canvas element's ID selector.
+````
+
 **autoplay** (Boolean)
-````
-Auto-start visualizer.
 
 ````shell
+    Auto-start visualizer.
+````
+
 **loop** (Boolean)
-````
-Sets visualizer auto-replay option.
 
 ````shell
+    Sets visualizer auto-replay option.
+````
+
 **style** (Boolean)
-````
-Sets canvas rendering visualization style. Currently only 'lounge' style is supported.
 
 ````shell
+    Sets canvas rendering visualization style. Currently only 'lounge' style is supported.
+````
+
 **barWidth** (Integer)
-````
-Sets bar's width in pixels.
 
 ````shell
+    Sets bar's width in pixels.
+````
+
 **barHeight** (Integer)
-````
-Sets initial bar's height in pixels (when there's no visualization).
 
 ````shell
+    Sets initial bar's height in pixels (when there's no visualization).
+````
+
 **barSpacing** (Integer)
-````
-Sets spacing between bars in pixels.
 
 ````shell
+    Sets spacing between bars in pixels.
+````
+
 **barColor** (String) - '#cafdff'
-````
-Sets HEX value as bar's color.
 
 ````shell
+    Sets HEX value as bar's color.
+````
+
 **shadowBlur** (Integer)
-````
-Sets value as bar's shadow blur.
 
 ````shell
+    Sets value as bar's shadow blur.
+````
+
 **shadowColor** (String) - '#ffffff'
-````
-Sets HEX value as bar's shadow color.
 
 ````shell
-**font** (Array) - ['12px', 'Helvetica']
+    Sets HEX value as bar's shadow color.
 ````
-Sets font size and font type.
 
+**font** (Array) - ['12px', 'Helvetica']
+
+````shell
+    Sets font size and font type.
+````
 
 #### CSS Styles
 Style by your own preference or you can use my styles.
