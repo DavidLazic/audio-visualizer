@@ -2,6 +2,20 @@ body {
     margin: 0;
 }
 
+.vz-source {
+    position: absolute;
+    display: inline-block;
+    top: 20px;
+    left: 20px;
+    z-index: 1;
+    color: #fff;
+    text-decoration: none;
+}
+
+.vz-source:hover {
+    color: #444;
+}
+
 .vz-wrapper {
     position: relative;
     height: 100vh;
