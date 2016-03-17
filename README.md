@@ -10,7 +10,7 @@ Web Audio experiment for audio visualization on canvas.
 ### Install via bower
 
 ````shell
-$bower install --save-dev ngMe
+$bower install --save-dev audio-visualizer
 ````
 
 #### Usage
