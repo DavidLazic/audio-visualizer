@@ -7,6 +7,12 @@ Web Audio experiment for audio visualization on canvas.
 
 ![visualizer](/screenshots/visualizer.png "visualizer")
 
+### Install via bower
+
+````shell
+$bower install --save-dev ngMe
+````
+
 #### Usage
 
 Include visualizer script in your index.html
@@ -39,13 +45,13 @@ Create Visualizer instance.
 **audio** (String) (required)
 
 ````
-    Audio element\'s ID selector.
+    Audio element's ID selector.
 ````
 
 **canvas** (String) (required)
 
 ````
-    Canvas element\'s ID selector.
+    Canvas element's ID selector.
 ````
 
 **autoplay** (Boolean)
@@ -69,13 +75,13 @@ Create Visualizer instance.
 **barWidth** (Integer)
 
 ````
-    Sets bar\'s width in pixels.
+    Sets bar's width in pixels.
 ````
 
 **barHeight** (Integer)
 
 ````
-    Sets initial bar\'s height in pixels (when there\'s no visualization).
+    Sets initial bar's height in pixels (when there's no visualization).
 ````
 
 **barSpacing** (Integer)
@@ -87,19 +93,19 @@ Create Visualizer instance.
 **barColor** (String) - '#cafdff'
 
 ````
-    Sets HEX value as bar\'s color.
+    Sets HEX value as bar's color.
 ````
 
 **shadowBlur** (Integer)
 
 ````
-    Sets value as bar\'s shadow blur.
+    Sets value as bar's shadow blur.
 ````
 
 **shadowColor** (String) - '#ffffff'
 
 ````
-    Sets HEX value as bar\'s shadow color.
+    Sets HEX value as bar's shadow color.
 ````
 
 **font** (Array) - ['12px', 'Helvetica']
