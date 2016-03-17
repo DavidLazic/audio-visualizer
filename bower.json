@@ -1,0 +1,27 @@
+{
+  "name": "audio-visualizer",
+  "version": "1.0.0",
+  "homepage": "https://github.com/DavidLazic/audio-visualizer",
+  "authors": [
+    "David Lazic <incognetii@gmail.com>"
+  ],
+  "description": "Web Audio and canvas experiment.",
+  "main": "visualizer.js",
+  "moduleType": [],
+  "keywords": [
+    "Web",
+    "Audio",
+    "Visualizer",
+    "Canvas",
+    "JavaScript",
+    "JS"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
