@@ -1,6 +1,11 @@
 ## Audio Visualizer
 Vanilla JS
 
+IMPORTANT: Please don't use this code out of the box (copy & paste) in production without testing it. It's been quite some time since I wrote this, and it's been written only as an `example` code, which you'll probably need to modify for your project's needs. Many things have changed, both in JavaScript rules and browser / mobile security rules.
+
+Purpose of this code is to serve as a `guideline` to start using Web Audio API.
+
+
 #### Description:
 
 Web Audio experiment for audio visualization on canvas.
