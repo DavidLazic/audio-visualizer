@@ -26,6 +26,7 @@ body {
     background: -ms-radial-gradient(circle, #396362, #000000);
     box-shadow: inset 0 0 160px 0 #000;
     cursor: pointer;
+    overflow: hidden;
 }
 
 .vz-wrapper.-canvas {
